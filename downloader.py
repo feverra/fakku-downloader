@@ -28,7 +28,7 @@ COOKIES_FILE = 'cookies.pickle'
 ROOT_MANGA_DIR = 'manga'
 # Timeout to page loading in seconds
 TIMEOUT = 1
- 
+
 
 def program_exit():
     print('Program exit.')
@@ -42,15 +42,16 @@ class FDownloader():
     screenshot from that. Because canvas in fakku.net is protected
     from download via simple .toDataURL js function etc.
     """
+
     def __init__(self,
-            urls_file=URLS_FILE,
-            cookies_file=COOKIES_FILE,
-            driver_path=EXEC_PATH, 
-            default_display=MAX_DISPLAY_SETTINGS,
-            timeout=TIMEOUT,
-            login=None,
-            password=None,
-        ):
+                 urls_file=URLS_FILE,
+                 cookies_file=COOKIES_FILE,
+                 driver_path=EXEC_PATH,
+                 default_display=MAX_DISPLAY_SETTINGS,
+                 timeout=TIMEOUT,
+                 login=None,
+                 password=None,
+                 ):
         """
         param: urls_file -- string name of .txt file with urls 
             Contains list of manga urls, that's to be downloaded
@@ -76,7 +77,7 @@ class FDownloader():
         self.timeout = timeout
         self.login = login
         self.password = password
-    
+
     def init_browser(self, headless=False):
         """
         Initializing browser and authenticate if necessary
@@ -98,7 +99,7 @@ class FDownloader():
 
     def __set_cookies(self):
         self.browser.get(LOGIN_URL)
-        #self.browser.delete_all_cookies()
+        # self.browser.delete_all_cookies()
         with open(self.cookies_file, 'rb') as f:
             cookies = pickle.load(f)
             for cookie in cookies:
@@ -115,7 +116,7 @@ class FDownloader():
         options.headless = True
         self.browser = webdriver.Chrome(
             executable_path=self.driver_path,
-            chrome_options=options)    
+            chrome_options=options)
 
     def __auth(self):
         """
@@ -125,16 +126,17 @@ class FDownloader():
         if not self.login is None:
             self.browser.find_element_by_id('username').send_keys(self.login)
         if not self.password is None:
-            self.browser.find_element_by_id('password').send_keys(self.password)
+            self.browser.find_element_by_id(
+                'password').send_keys(self.password)
         self.browser.find_element_by_class_name('js-submit').click()
 
         ready = input("Tab Enter to continue after you login...")
         with open(self.cookies_file, 'wb') as f:
             pickle.dump(self.browser.get_cookies(), f)
-        
+
         self.browser.close()
         # Recreating browser in headless mode for next manga downloading
-        self.__init_headless_browser()   
+        self.__init_headless_browser()
 
     def load_all(self):
         """
@@ -145,31 +147,46 @@ class FDownloader():
             os.mkdir(ROOT_MANGA_DIR)
         for url in self.urls:
             manga_name = url.split('/')[-1]
-            manga_folder = f'{ROOT_MANGA_DIR}\\{manga_name}'
-            if not os.path.exists(manga_folder):
-               os.mkdir(manga_folder)
+
             self.browser.get(url)
             self.waiting_loading_page(is_main_page=True)
             page_count = self.__get_page_count(self.browser.page_source)
+
+            manga_folder = f'{ROOT_MANGA_DIR}\\{manga_name}-{page_count}'
+            if os.path.exists(manga_folder):
+                continue
+            if not os.path.exists(manga_folder):
+                os.mkdir(manga_folder)
+
+            #if page_count > 100:
+                #page_count = 33
             print(f'Downloading "{manga_name}" manga.')
-            for page_num in tqdm(range(1, page_count + 1)):
-                self.browser.get(f'{url}/read/page/{page_num}')
-                self.waiting_loading_page(is_main_page=False)
+            print(f'page_count "{page_count}"')
+            if page_count != None:
+                for page_num in tqdm(range(1, page_count + 1)):
+                    self.browser.get(f'{url}/read/page/{page_num}')
+                    self.waiting_loading_page(is_main_page=False)
 
-                # Count of leyers may be 2 or 3 therefore we get different target layer
-                n = self.browser.execute_script("return document.getElementsByClassName('layer').length")
-                try:
-                    # Resizing window size for exactly manga page size
-                    width = self.browser.execute_script(f"return document.getElementsByTagName('canvas')[{n-2}].width")
-                    height = self.browser.execute_script(f"return document.getElementsByTagName('canvas')[{n-2}].height")
-                    self.browser.set_window_size(width, height)
-                except JavascriptException:
-                    print('\nSome error with JS. Page source are note ready. You can try increase argument -t')
+                    # Count of leyers may be 2 or 3 therefore we get different target layer
+                    n = self.browser.execute_script(
+                        "return document.getElementsByClassName('layer').length")
+                    try:
+                        # Resizing window size for exactly manga page size
+                        width = self.browser.execute_script(
+                            f"return document.getElementsByTagName('canvas')[{n-2}].width")
+                        height = self.browser.execute_script(
+                            f"return document.getElementsByTagName('canvas')[{n-2}].height")
+                        self.browser.set_window_size(width, height)
+                    except JavascriptException:
+                        print(
+                            '\nSome error with JS. Page source are note ready. You can try increase argument -t')
 
-                # Delete all UI
-                self.browser.execute_script(f"document.getElementsByClassName('layer')[{n-1}].remove()")
-                self.browser.save_screenshot(f'{manga_folder}\\{page_num}.png')
-            print('>> manga done!')
+                    # Delete all UI
+                    self.browser.execute_script(
+                        f"document.getElementsByClassName('layer')[{n-1}].remove()")
+                    self.browser.save_screenshot(
+                        f'{manga_folder}\\{page_num}.png')
+                print('>> manga done!')
 
     def __get_page_count(self, page_source):
         """
@@ -184,9 +201,19 @@ class FDownloader():
         page_count = None
         if not page_count:
             try:
-                page_count = int(soup.find_all('div', attrs={'class': 'row'})[5]
-                    .find('div', attrs={'class': 'row-right'}).text
-                    .split(' ')[0])
+                chkpage = str(soup.find_all('div', attrs={'class': 'row'})[
+                              4].find('div', attrs={'class': 'row-left'}).text)
+                if(chkpage == 'Pages'):
+                    page_count = int(soup.find_all('div', attrs={'class': 'row'})[4]
+                                     .find('div', attrs={'class': 'row-right'}).text
+                                     .split(' ')[0])
+                else:
+                    page_count = int(soup.find_all('div', attrs={'class': 'row'})[5]
+                                     .find('div', attrs={'class': 'row-right'}).text
+                                     .split(' ')[0])
+                # page_count = int(soup.find_all('div', attrs={'class': 'row'})[5]
+                #     .find('div', attrs={'class': 'row-right'}).text
+                #     .split(' ')[0])
             except Exception as ex:
                 print(ex)
         return page_count
@@ -203,8 +230,8 @@ class FDownloader():
         urls = []
         with open(urls_file, 'r') as f:
             for line in f:
-                urls.append(line.replace('\n',''))
-        return urls        
+                urls.append(line.replace('\n', ''))
+        return urls
 
     def waiting_loading_page(self, is_main_page=True):
         """
@@ -226,5 +253,4 @@ class FDownloader():
             print('\nError: timed out waiting for page to load. + \
                 You can try increase param -t for more delaying.')
             program_exit()
-
 
