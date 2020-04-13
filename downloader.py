@@ -176,6 +176,13 @@ class FDownloader():
                             f"return document.getElementsByTagName('canvas')[{n-2}].width")
                         height = self.browser.execute_script(
                             f"return document.getElementsByTagName('canvas')[{n-2}].height")
+                        
+                        # old images
+                        if(width < 500):
+                            width = self.browser.execute_script(
+                                f"return document.getElementsByTagName('img')[0].width")
+                            height = self.browser.execute_script(
+                                f"return document.getElementsByTagName('img')[0].height")
                         self.browser.set_window_size(width, height)
                     except JavascriptException:
                         print(
