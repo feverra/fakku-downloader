@@ -159,7 +159,7 @@ class FDownloader():
                 continue
 
             print(f'Downloading "{manga_name}" manga.')
-            print(f'page_count "{page_count}"')
+            print(f'Page Count "{page_count}"')
             if page_count != None:
                 if not os.path.exists(manga_folder):
                     os.mkdir(manga_folder)
@@ -187,12 +187,15 @@ class FDownloader():
                     except JavascriptException:
                         print(
                             '\nSome error with JS. Page source are note ready. You can try increase argument -t')
-
                     # Delete all UI
                     self.browser.execute_script(
                         f"document.getElementsByClassName('layer')[{n-1}].remove()")
+                    # Add Leading Zeros
+                    page_num_str = str(page_num)
+                    page_num_str = page_num_str.zfill(len(str(page_count)))
+                    
                     self.browser.save_screenshot(
-                        f'{manga_folder}\\{page_num}.png')
+                        f'{manga_folder}\\{page_num_str}.png')
                 print('>> manga done!')
 
     def __get_page_count(self, page_source):
