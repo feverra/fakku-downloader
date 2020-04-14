@@ -37,7 +37,7 @@ def program_exit():
 
 class FDownloader():
     """
-    Class which allows download manga. 
+    Class which allows download manga.
     The main idea of download - using headless browser and just saving
     screenshot from that. Because canvas in fakku.net is protected
     from download via simple .toDataURL js function etc.
@@ -53,16 +53,16 @@ class FDownloader():
                  password=None,
                  ):
         """
-        param: urls_file -- string name of .txt file with urls 
+        param: urls_file -- string name of .txt file with urls
             Contains list of manga urls, that's to be downloaded
-        param: cookies_file -- string name of .picle file with cookies 
+        param: cookies_file -- string name of .picle file with cookies
             Contains bynary data with cookies
         param: driver_path -- string
             Path to the headless driver
-        param: default_display -- list of two int (width, height)    
+        param: default_display -- list of two int (width, height)
             Initial display settings. After loading the page, they will be changed
         param: timeout -- float
-            Timeout in seconds beetween pages downloading. 
+            Timeout in seconds beetween pages downloading.
             If <1 may be poor quality.
         param: login -- string
             Login or email for authentication
@@ -153,13 +153,13 @@ class FDownloader():
             page_count = self.__get_page_count(self.browser.page_source)
 
             manga_folder = f'{ROOT_MANGA_DIR}\\{manga_name}-{page_count}'
+            # Check Had
             if os.path.exists(manga_folder):
+                print('Downloaded')
                 continue
             if not os.path.exists(manga_folder):
                 os.mkdir(manga_folder)
 
-            #if page_count > 100:
-                #page_count = 33
             print(f'Downloading "{manga_name}" manga.')
             print(f'page_count "{page_count}"')
             if page_count != None:
@@ -176,7 +176,7 @@ class FDownloader():
                             f"return document.getElementsByTagName('canvas')[{n-2}].width")
                         height = self.browser.execute_script(
                             f"return document.getElementsByTagName('canvas')[{n-2}].height")
-                        
+
                         # old images
                         if(width < 500):
                             width = self.browser.execute_script(
@@ -208,19 +208,17 @@ class FDownloader():
         page_count = None
         if not page_count:
             try:
-                chkpage = str(soup.find_all('div', attrs={'class': 'row'})[
-                              4].find('div', attrs={'class': 'row-left'}).text)
-                if(chkpage == 'Pages'):
-                    page_count = int(soup.find_all('div', attrs={'class': 'row'})[4]
-                                     .find('div', attrs={'class': 'row-right'}).text
-                                     .split(' ')[0])
-                else:
-                    page_count = int(soup.find_all('div', attrs={'class': 'row'})[5]
-                                     .find('div', attrs={'class': 'row-right'}).text
-                                     .split(' ')[0])
-                # page_count = int(soup.find_all('div', attrs={'class': 'row'})[5]
-                #     .find('div', attrs={'class': 'row-right'}).text
-                #     .split(' ')[0])
+                # Check Have Read Button
+                canRead = soup.find_all(
+                    'a', attrs={'class': 'green'})[0].text
+                if(canRead == ' Start Reading'):
+                    # Find Book Page
+                    div = soup.find_all('div', attrs={'class': 'row'})
+                    for row in div:
+                        if (str(row.find('div', attrs={'class': 'row-left'}).text) == 'Pages'):
+                            page_count = int(row.find('div', attrs={'class': 'row-right'}).text
+                                             .split(' ')[0])
+                            break
             except Exception as ex:
                 print(ex)
         return page_count
@@ -260,4 +258,3 @@ class FDownloader():
             print('\nError: timed out waiting for page to load. + \
                 You can try increase param -t for more delaying.')
             program_exit()
-
