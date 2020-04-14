@@ -147,16 +147,14 @@ class FDownloader():
             os.mkdir(ROOT_MANGA_DIR)
         for url in self.urls:
             manga_name = url.split('/')[-1]
-
-            self.browser.get(url)
-            self.waiting_loading_page(is_main_page=True)
-            page_count = self.__get_page_count(self.browser.page_source)
-
             manga_folder = f'{ROOT_MANGA_DIR}\\{manga_name}'
             # Check Had
             if os.path.exists(manga_folder):
                 print('Downloaded')
                 continue
+            self.browser.get(url)
+            self.waiting_loading_page(is_main_page=True)
+            page_count = self.__get_page_count(self.browser.page_source)
 
             print(f'Downloading "{manga_name}" manga.')
             print(f'Page Count "{page_count}"')
