@@ -152,17 +152,17 @@ class FDownloader():
             self.waiting_loading_page(is_main_page=True)
             page_count = self.__get_page_count(self.browser.page_source)
 
-            manga_folder = f'{ROOT_MANGA_DIR}\\{manga_name}-{page_count}'
+            manga_folder = f'{ROOT_MANGA_DIR}\\{manga_name}'
             # Check Had
             if os.path.exists(manga_folder):
                 print('Downloaded')
                 continue
-            if not os.path.exists(manga_folder):
-                os.mkdir(manga_folder)
 
             print(f'Downloading "{manga_name}" manga.')
             print(f'page_count "{page_count}"')
             if page_count != None:
+                if not os.path.exists(manga_folder):
+                    os.mkdir(manga_folder)
                 for page_num in tqdm(range(1, page_count + 1)):
                     self.browser.get(f'{url}/read/page/{page_num}')
                     self.waiting_loading_page(is_main_page=False)
